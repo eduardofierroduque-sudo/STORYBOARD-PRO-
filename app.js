@@ -828,6 +828,18 @@ function asegurarJsPDF() {
  */
 function ensamblarPDF(datosGuion, imagenes) {
     return asegurarJsPDF().then(function() {
+        return fetch('/logo-fap.png')
+            .then(function(r) { return r.blob(); })
+            .then(function(blob) {
+                return new Promise(function(resolve) {
+                    var reader = new FileReader();
+                    reader.onload = function() { resolve(reader.result); };
+                    reader.readAsDataURL(blob);
+                });
+            }).catch(function() {
+                return null;
+            });
+    }).then(function(logoDataUrl) {
         var jsPDF = window.jspdf.jsPDF;
         var doc = new jsPDF('p', 'mm', [297, 335]);
         var pw = doc.internal.pageSize.getWidth();
@@ -844,27 +856,39 @@ function ensamblarPDF(datosGuion, imagenes) {
             doc.setFontSize(7);
             doc.setTextColor(color[0], color[1], color[2]);
             doc.text('www.fierroduque.com', m, ph - 5);
-            doc.text('' + numPag, pw - m, ph - 5, { align: 'right' });
+            doc.text('www.freeanimationpower.com', pw - m, ph - 5, { align: 'right' });
         };
 
-        doc.setFillColor(18, 18, 22);
+        doc.setFillColor(255, 224, 0);
         doc.rect(0, 0, pw, ph, 'F');
 
-        doc.setTextColor(245, 245, 245);
+        // Logo FAP centrado arriba
+        var logoY = 0;
+        if (logoDataUrl) {
+            var logoW = 30;
+            var logoH = 30;
+            var logoX = cy - logoW / 2;
+            logoY = 16;
+            doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoW, logoH);
+        }
+
+        var titY = logoDataUrl ? logoY + logoH + 14 : 50;
+
+        doc.setTextColor(252, 73, 2);
         doc.setFont('courier', 'bold');
         doc.setFontSize(28);
         var tituloLines = doc.splitTextToSize(datosGuion.titulo.toUpperCase(), cw * 0.8);
-        doc.text(tituloLines, cy, 78, { align: 'center' });
+        doc.text(tituloLines, cy, titY, { align: 'center' });
 
         var titEnd = 78 + (tituloLines.length - 1) * 10;
-        doc.setDrawColor(200, 160, 40);
+        doc.setDrawColor(252, 73, 2);
         doc.setLineWidth(0.8);
         doc.line(cy - 44, titEnd + 14, cy + 44, titEnd + 14);
         var nextY = titEnd + 30;
 
         doc.setFont('courier', 'bold');
         doc.setFontSize(10);
-        doc.setTextColor(170, 170, 170);
+        doc.setTextColor(0, 0, 0);
         doc.text('RITMO DEL SPOT', cy, nextY, { align: 'center' });
         nextY += 8;
 
@@ -872,7 +896,7 @@ function ensamblarPDF(datosGuion, imagenes) {
         if (ritmoSpot) {
             doc.setFont('courier', 'bold');
             doc.setFontSize(13);
-            doc.setTextColor(220, 220, 220);
+            doc.setTextColor(0, 0, 0);
             var ritmoLines = doc.splitTextToSize(ritmoSpot.toUpperCase(), cw * 0.75);
             doc.text(ritmoLines.slice(0, 2), cy, nextY, { align: 'center' });
             nextY += 4 + ritmoLines.slice(0, 2).length * 6 + 35;
@@ -882,7 +906,7 @@ function ensamblarPDF(datosGuion, imagenes) {
 
         doc.setFont('courier', 'bold');
         doc.setFontSize(11);
-        doc.setTextColor(210, 210, 210);
+        doc.setTextColor(0, 0, 0);
         doc.text('PRODUCCION', cy, nextY, { align: 'center' });
         nextY += 10;
 
@@ -890,7 +914,7 @@ function ensamblarPDF(datosGuion, imagenes) {
         if (notas) {
             doc.setFont('courier', 'normal');
             doc.setFontSize(11);
-            doc.setTextColor(160, 160, 160);
+            doc.setTextColor(0, 0, 0);
             var notaLines = doc.splitTextToSize(notas, cw * 0.8);
             doc.text(notaLines, cy, nextY, { align: 'center' });
             nextY += 2 + notaLines.length * 4.5;
@@ -898,9 +922,9 @@ function ensamblarPDF(datosGuion, imagenes) {
 
         doc.setFont('courier', 'normal');
         doc.setFontSize(10);
-        doc.setTextColor(198, 160, 40);
-        doc.text('Generado por fierroduque.com', cy, ph - 42, { align: 'center' });
-        pie(1, [198, 160, 40]);
+        doc.setTextColor(252, 73, 2);
+        doc.text('Generado por fierroduque.com y freeanimationpower.com', cy, ph - 42, { align: 'center' });
+        pie(1, [252, 73, 2]);
 
         for (var e = 0; e < datosGuion.escenas.length; e++) {
             var escena = datosGuion.escenas[e];
