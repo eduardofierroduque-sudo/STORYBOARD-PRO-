@@ -1116,7 +1116,9 @@ function initConfigUI() {
         } else {
             imageApiKeyInput.disabled = false;
             imageApiKeyInput.placeholder = 'Ingresa tu API key / token';
+            imageModelInput.value = '';
             imageModelInput.disabled = false;
+            imageModelInput.placeholder = 'Auto-detectado';
             imageUrlInput.value = '';
             imageUrlInput.disabled = true;
             if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
@@ -1173,7 +1175,9 @@ function initConfigUI() {
         } else {
             imageApiKeyInput.disabled = false;
             imageApiKeyInput.placeholder = 'Ingresa tu API key / token';
+            imageModelInput.value = '';
             imageModelInput.disabled = false;
+            imageModelInput.placeholder = 'Auto-detectado';
             imageUrlInput.value = '';
             imageUrlInput.disabled = true;
             if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
