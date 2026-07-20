@@ -1075,25 +1075,11 @@ function initConfigUI() {
         }
     }
 
-    fillSelect(textProviderSelect, TEXT_PROVIDERS, config.text.provider);
-    fillSelect(imageProviderSelect, IMAGE_PROVIDERS, config.image.provider);
+    // --- Registrar listeners ANTES de fillSelect ---
+    var initializing = true;
 
-    // Llenar campos
-    textApiKeyInput.value = config.text.apiKey || '';
-    textModelInput.value = config.text.model || '';
-    textUrlInput.value = config.text.baseUrl || '';
-    imageApiKeyInput.value = config.image.apiKey || '';
-    imageModelInput.value = config.image.model || '';
-    imageUrlInput.value = config.image.baseUrl || '';
-    if (imageExtraHeadersInput) {
-        imageExtraHeadersInput.value = config.image.extraHeaders || '';
-    }
-
-    populateTextFields();
-    populateImageFields();
-
-    // Eventos
     textProviderSelect.addEventListener('change', function() {
+        if (initializing) return;
         var providerKey = textProviderSelect.value;
         var provider = TEXT_PROVIDERS[providerKey];
         if (providerKey === 'custom') {
@@ -1110,6 +1096,7 @@ function initConfigUI() {
     });
 
     imageProviderSelect.addEventListener('change', function() {
+        if (initializing) return;
         var providerKey = imageProviderSelect.value;
         if (providerKey === 'pollinations') {
             imageApiKeyInput.value = '';
@@ -1119,8 +1106,6 @@ function initConfigUI() {
             imageModelInput.disabled = true;
             imageUrlInput.value = '';
             imageUrlInput.disabled = true;
-            if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
-        } else if (providerKey === 'custom') {
             if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
         } else if (providerKey === 'custom') {
             imageApiKeyInput.disabled = false;
@@ -1138,6 +1123,67 @@ function initConfigUI() {
         }
     });
 
+    // --- Llenar selectores (listeners bloqueados) ---
+    fillSelect(textProviderSelect, TEXT_PROVIDERS, config.text.provider);
+    fillSelect(imageProviderSelect, IMAGE_PROVIDERS, config.image.provider);
+
+    // --- Cargar valores guardados ---
+    textApiKeyInput.value = config.text.apiKey || '';
+    textModelInput.value = config.text.model || '';
+    textUrlInput.value = config.text.baseUrl || '';
+    imageApiKeyInput.value = config.image.apiKey || '';
+    imageModelInput.value = config.image.model || '';
+    imageUrlInput.value = config.image.baseUrl || '';
+    if (imageExtraHeadersInput) {
+        imageExtraHeadersInput.value = config.image.extraHeaders || '';
+    }
+
+    // --- Aplicar estado inicial de campos segun proveedor ---
+    (function applyTextState() {
+        var pk = textProviderSelect.value;
+        var p = TEXT_PROVIDERS[pk];
+        if (pk === 'custom') {
+            textModelInput.disabled = false;
+            textUrlInput.disabled = false;
+        } else if (p) {
+            textModelInput.value = textModelInput.value || p.model;
+            textUrlInput.value = textUrlInput.value || p.url;
+            textModelInput.disabled = false;
+            textUrlInput.disabled = false;
+        }
+    })();
+
+    (function applyImageState() {
+        var pk = imageProviderSelect.value;
+        if (pk === 'pollinations') {
+            imageApiKeyInput.value = imageApiKeyInput.value || '';
+            imageApiKeyInput.disabled = true;
+            imageApiKeyInput.placeholder = 'No necesita API key';
+            imageModelInput.value = 'Pollinations.ai (gratuito)';
+            imageModelInput.disabled = true;
+            imageUrlInput.value = '';
+            imageUrlInput.disabled = true;
+            if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
+        } else if (pk === 'custom') {
+            imageApiKeyInput.disabled = false;
+            imageApiKeyInput.placeholder = 'Ingresa tu API key / token';
+            imageModelInput.disabled = false;
+            imageUrlInput.disabled = false;
+            if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'block';
+        } else {
+            imageApiKeyInput.disabled = false;
+            imageApiKeyInput.placeholder = 'Ingresa tu API key / token';
+            imageModelInput.disabled = false;
+            imageUrlInput.value = '';
+            imageUrlInput.disabled = true;
+            if (imageExtraHeadersWrap) imageExtraHeadersWrap.style.display = 'none';
+        }
+    })();
+
+    // --- Fin inicializacion: soltar bloqueo de listeners ---
+    initializing = false;
+
+    // --- Guardar configuracion ---
     saveConfigBtn.addEventListener('click', function() {
         config.text.provider = textProviderSelect.value;
         config.text.apiKey = textApiKeyInput.value.trim();
@@ -1154,10 +1200,7 @@ function initConfigUI() {
 
         saveConfig(config);
 
-        var hasTextKey = !!config.text.apiKey;
-        var hasImageKey = !!config.image.apiKey || config.image.provider === 'pollinations';
-
-        if (hasTextKey) {
+        if (config.text.apiKey) {
             configStatus.textContent = 'Configuracion guardada. Listo para generar.';
             configStatus.style.color = '#2d7d46';
         } else {
@@ -1166,23 +1209,24 @@ function initConfigUI() {
         }
     });
 
+    // --- Limpiar configuracion ---
     clearConfigBtn.addEventListener('click', function() {
         clearConfig();
         config = getDefaultConfig();
+        initializing = true;
         fillSelect(textProviderSelect, TEXT_PROVIDERS, config.text.provider);
         fillSelect(imageProviderSelect, IMAGE_PROVIDERS, config.image.provider);
         textApiKeyInput.value = '';
         textModelInput.value = config.text.model;
         textUrlInput.value = config.text.baseUrl;
         imageApiKeyInput.value = '';
-        imageApiKeyInput.disabled = false;
         imageModelInput.value = '';
-        imageModelInput.disabled = false;
         imageUrlInput.value = '';
-        imageUrlInput.disabled = true;
         if (imageExtraHeadersInput) imageExtraHeadersInput.value = '';
-        populateTextFields();
-        populateImageFields();
+        initializing = false;
+        // Disparar manualmente para aplicar estado
+        textProviderSelect.dispatchEvent(new Event('change'));
+        imageProviderSelect.dispatchEvent(new Event('change'));
         configStatus.textContent = '';
     });
 
