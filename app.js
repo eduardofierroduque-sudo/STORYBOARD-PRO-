@@ -64,6 +64,21 @@ const TEXT_PROVIDERS = {
 };
 
 const IMAGE_PROVIDERS = {
+    gemini_imagen: {
+        name: 'Google Gemini (Imagen)',
+        method: 'POST',
+        formatPayload: function(prompt) {
+            return {
+                url: 'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=' + this._key,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: {
+                    instances: [{ prompt: prompt }],
+                    parameters: { sampleCount: 1, aspectRatio: '16:9' }
+                }
+            };
+        }
+    },
     hf_flux_schnell: {
         name: 'HuggingFace FLUX.1 Schnell',
         method: 'POST',

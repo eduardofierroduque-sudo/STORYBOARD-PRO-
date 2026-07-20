@@ -174,6 +174,13 @@ async function handleImageProxy(req, res) {
                     res.end(buf);
                     return;
                 }
+                if (json.predictions && json.predictions[0] && json.predictions[0].bytesBase64Encoded) {
+                    const buf = Buffer.from(json.predictions[0].bytesBase64Encoded, 'base64');
+                    res.setHeader('Content-Type', 'image/png');
+                    res.writeHead(200);
+                    res.end(buf);
+                    return;
+                }
             } catch (_) {}
         }
 
