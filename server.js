@@ -114,16 +114,12 @@ async function handleChatProxy(req, res) {
             res.end(JSON.stringify({ error: 'Falta x-target-url' }));
             return;
         }
-        if (!apiKey) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Falta x-api-key' }));
-            return;
-        }
 
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
-        };
+        var headers = { 'Content-Type': 'application/json' };
+
+        if (apiKey) {
+            headers['Authorization'] = 'Bearer ' + apiKey;
+        }
 
         const result = await proxyRequest(targetUrl, 'POST', headers, rawBody.toString());
 

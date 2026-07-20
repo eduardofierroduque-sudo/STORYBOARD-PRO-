@@ -13,9 +13,16 @@
 // ============================================================
 const TEXT_PROVIDERS = {
     openai: {
-        name: 'OpenAI',
+        name: 'OpenAI (GPT-4o)',
         url: 'https://api.openai.com/v1/chat/completions',
         model: 'gpt-4o',
+        supportsJsonMode: true
+    },
+    gemini: {
+        name: 'Google Gemini',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/',
+        model: 'gemini-2.0-flash',
+        apiFormat: 'gemini',
         supportsJsonMode: true
     },
     opencode: {
@@ -225,6 +232,32 @@ var obtenerSystemPrompt = function() {
  * Llama a la API de texto via el proxy generico.
  * Reintenta automaticamente en errores 503/429 y parseo fallido.
  */
+function buildGeminiPayload(tc, brief) {
+    var systemPrompt = obtenerSystemPrompt();
+    return {
+        body: {
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: brief }] }],
+            generationConfig: {
+                maxOutputTokens: 4096,
+                responseMimeType: 'application/json'
+            }
+        },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-target-url': 'https://generativelanguage.googleapis.com/v1beta/models/' + tc.model + ':generateContent?key=' + tc.apiKey
+        }
+    };
+}
+
+function parseGeminiResponse(data) {
+    var parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+    if (parts) {
+        return parts.map(function(p) { return p.text || ''; }).join('').trim();
+    }
+    return '';
+}
+
 function obtenerGuionIA(brief, intento) {
     intento = intento || 1;
     var MAX_INTENTOS = 4;
@@ -236,28 +269,40 @@ function obtenerGuionIA(brief, intento) {
     }
 
     var provider = TEXT_PROVIDERS[tc.provider] || TEXT_PROVIDERS.custom;
+    var isGemini = (provider.apiFormat === 'gemini');
 
-    var payload = {
-        model: tc.model,
-        messages: [
-            { role: 'system', content: obtenerSystemPrompt() },
-            { role: 'user', content: brief }
-        ],
-        max_tokens: 4096
-    };
+    var requestHeaders, requestBody;
 
-    if (provider.supportsJsonMode) {
-        payload.response_format = { type: 'json_object' };
+    if (isGemini) {
+        var geminiReq = buildGeminiPayload(tc, brief);
+        requestHeaders = geminiReq.headers;
+        requestBody = geminiReq.body;
+    } else {
+        var payload = {
+            model: tc.model,
+            messages: [
+                { role: 'system', content: obtenerSystemPrompt() },
+                { role: 'user', content: brief }
+            ],
+            max_tokens: 4096
+        };
+
+        if (provider.supportsJsonMode) {
+            payload.response_format = { type: 'json_object' };
+        }
+
+        requestHeaders = {
+            'Content-Type': 'application/json',
+            'x-target-url': tc.baseUrl,
+            'x-api-key': tc.apiKey
+        };
+        requestBody = payload;
     }
 
     return fetch('/api/chat', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-target-url': tc.baseUrl,
-            'x-api-key': tc.apiKey
-        },
-        body: JSON.stringify(payload)
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody)
     }).then(function(response) {
         if (!response.ok) {
             var status = response.status;
@@ -288,7 +333,13 @@ function obtenerGuionIA(brief, intento) {
 
         return response.json();
     }).then(function(data) {
-        var rawText = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        var rawText;
+
+        if (isGemini) {
+            rawText = parseGeminiResponse(data);
+        } else {
+            rawText = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        }
 
         if (!rawText) throw new Error('La IA devolvio respuesta vacia.');
 
