@@ -687,7 +687,7 @@ function generarPlaceholder(texto, index) {
  * Genera imagenes usando el proveedor configurado con fallback a Pollinations y Canvas.
  */
 function fetchImageAsBase64(prompt, index) {
-    var enhanced = prompt + ', clean storyboard panel, hand-drawn pencil art, soft shading, grayscale, film storyboard style, no text no watermark no signature';
+    var enhanced = prompt + ', storyboard sketch, hand-drawn, grayscale';
     var config = loadConfig();
     var imgConfig = config.image;
 
@@ -1312,8 +1312,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var sourcesUsadas = {};
             for (var e = 0; e < datosGuion.escenas.length; e++) {
                 var escena = datosGuion.escenas[e];
-                var planosImg = [];
                 (function(escena, e) {
+                    var planosImg = [];
                     var pChain = Promise.resolve();
                     for (var p = 0; p < escena.planos.length; p++) {
                         (function(p) {
@@ -1322,13 +1322,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 statusText.innerText = 'Generando imagen ' + (imgIdx + 1) + '/8...';
                                 var plano = escena.planos[p];
                                 var parts = [
-                                    'Scene ' + (e + 1) + ' Shot ' + (p + 1),
-                                    'Camera: ' + (plano.tipo_camara || 'medium shot'),
+                                    'Panel ' + (e * 2 + p + 1) + ' of 8',
+                                    plano.texto_narrativo.slice(0, 250),
+                                    'Shot type: ' + (plano.tipo_camara || 'medium shot'),
                                     'Movement: ' + (plano.movimiento_camara || 'static'),
-                                    'Style: ' + (plano.estilo_visual || 'storyboard hand-drawn'),
-                                    plano.image_prompt
+                                    'Look: ' + (plano.estilo_visual || 'storyboard hand-drawn'),
+                                    'Details: ' + (plano.image_prompt || '')
                                 ];
-                                var uniquePrompt = parts.filter(function(s) { return s; }).join('. ');
+                                var uniquePrompt = parts.join(' | ');
+                                console.log('Prompt ' + (e + 1) + '-' + (p + 1) + ': ' + uniquePrompt.slice(0, 150));
                                 return fetchImageAsBase64(uniquePrompt, imgIdx);
                             }).then(function(result) {
                                 planosImg.push(result.data);
