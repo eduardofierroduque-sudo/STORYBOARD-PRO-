@@ -219,17 +219,24 @@ function clearConfig() {
 // ============================================================
 //  MENSAJES DE ERROR (espanol)
 // ============================================================
-function getErrorMessage(code) {
+function getErrorMessage(code, providerName, apiType) {
+    var prefix = '';
+    if (apiType && providerName) {
+        prefix = apiType + ' (' + providerName + '): ';
+    } else if (providerName) {
+        prefix = providerName + ': ';
+    }
     var messages = {
         'CONFIG_REQUIRED': 'No hay API key configurada. Abre el panel de configuracion arriba y agrega tu clave.',
-        'API_KEY_INVALID': 'API key invalida o sin creditos. Verifica tu clave en el panel de configuracion.',
+        'API_KEY_INVALID': 'API key invalida o sin creditos.',
         'RATE_LIMITED': 'Limite de uso alcanzado. Espera unos segundos o cambia de API key.',
-        'CONNECTION_ERROR': 'No se pudo conectar al servidor proxy. Asegurate de que server.js este corriendo.',
-        'PARSE_ERROR': 'La IA esta reestructurando la idea, por favor intenta de nuevo.',
+        'CONNECTION_ERROR': 'No se pudo conectar al proveedor.',
+        'PARSE_ERROR': 'La IA devolvio una respuesta inesperada.',
         'SERVER_DOWN': 'El servidor proxy no responde. Ejecuta "node server.js" en la terminal.',
-        'IMAGE_FAILED': 'Fallo la generacion de imagen con el proveedor configurado.'
+        'IMAGE_FAILED': 'Fallo la generacion de imagen.',
+        'IMAGE_PROVIDER_FAILED': 'sin respuesta. Cambiando a Pollinations gratis...'
     };
-    return messages[code] || code;
+    return prefix + (messages[code] || code);
 }
 
 // ============================================================
@@ -280,11 +287,19 @@ function obtenerGuionIA(brief, intento) {
     var tc = config.text;
 
     if (!tc.apiKey) {
-        return Promise.reject(new Error('CONFIG_REQUIRED'));
+        return Promise.reject(makeError('CONFIG_REQUIRED'));
     }
 
     var provider = TEXT_PROVIDERS[tc.provider] || TEXT_PROVIDERS.custom;
     var isGemini = (provider.apiFormat === 'gemini');
+
+    function makeError(code) {
+        var err = new Error(code);
+        err.errorCode = code;
+        err.providerName = provider.name;
+        err.apiType = 'Texto';
+        return err;
+    }
 
     var requestHeaders, requestBody;
 
@@ -323,7 +338,7 @@ function obtenerGuionIA(brief, intento) {
             var status = response.status;
 
             if (status === 401 || status === 403) {
-                return Promise.reject(new Error('API_KEY_INVALID'));
+                return Promise.reject(makeError('API_KEY_INVALID'));
             }
 
             if (status === 429) {
@@ -332,7 +347,7 @@ function obtenerGuionIA(brief, intento) {
                     return new Promise(function(r) { setTimeout(r, delay); })
                         .then(function() { return obtenerGuionIA(brief, intento + 1); });
                 }
-                return Promise.reject(new Error('RATE_LIMITED'));
+                return Promise.reject(makeError('RATE_LIMITED'));
             }
 
             if (intento < MAX_INTENTOS) {
@@ -372,11 +387,11 @@ function obtenerGuionIA(brief, intento) {
                 return new Promise(function(r) { setTimeout(r, 2000); })
                     .then(function() { return obtenerGuionIA(brief, intento + 1); });
             }
-            throw new Error('PARSE_ERROR');
+            throw makeError('PARSE_ERROR');
         }
     }).catch(function(e) {
-        if (e.message === 'CONFIG_REQUIRED' || e.message === 'API_KEY_INVALID' ||
-            e.message === 'RATE_LIMITED' || e.message === 'PARSE_ERROR') {
+        if (e.errorCode === 'CONFIG_REQUIRED' || e.errorCode === 'API_KEY_INVALID' ||
+            e.errorCode === 'RATE_LIMITED' || e.errorCode === 'PARSE_ERROR') {
             throw e;
         }
         if (intento < MAX_INTENTOS) {
@@ -384,7 +399,7 @@ function obtenerGuionIA(brief, intento) {
             return new Promise(function(r) { setTimeout(r, delay3); })
                 .then(function() { return obtenerGuionIA(brief, intento + 1); });
         }
-        throw new Error('CONNECTION_ERROR');
+        throw makeError('CONNECTION_ERROR');
     });
 }
 
@@ -708,9 +723,11 @@ function fetchImageAsBase64(prompt, index) {
         if (provider && imgConfig.apiKey) {
             provider._key = imgConfig.apiKey;
             var payload = provider.formatPayload(enhanced);
-            console.log('Img ' + (index + 1) + ' probando ' + provider.name + '...');
+            var srcName = provider.name;
+            console.log('Img ' + (index + 1) + ' probando ' + srcName + '...');
             return tryViaProxy(payload).then(function(result) {
-                if (result) return result;
+                if (result) return { data: result, source: srcName };
+                console.warn('Img ' + (index + 1) + ' ' + srcName + ' ' + getErrorMessage('IMAGE_PROVIDER_FAILED', srcName, 'Imagen'));
                 return tryPollinations(enhanced, index);
             });
         }
@@ -732,7 +749,8 @@ function fetchImageAsBase64(prompt, index) {
         var customPayload = customProvider.formatPayload(enhanced);
         console.log('Img ' + (index + 1) + ' probando Personalizado...');
         return tryViaProxy(customPayload).then(function(result) {
-            if (result) return result;
+            if (result) return { data: result, source: 'Personalizado' };
+            console.warn('Img ' + (index + 1) + ' Personalizado ' + getErrorMessage('IMAGE_PROVIDER_FAILED', 'Personalizado', 'Imagen'));
             return tryPollinations(enhanced, index);
         });
     }
@@ -758,10 +776,10 @@ function tryPollinations(enhanced, index) {
     return tryRequestWithRetry(payload, 5, index).then(function(buf) {
         if (buf && buf.byteLength > 500) {
             console.log('Img ' + (index + 1) + ' Pollinations OK: ' + buf.byteLength + ' bytes');
-            return arrayBufferToBase64(buf);
+            return { data: arrayBufferToBase64(buf), source: 'Pollinations.ai (gratis)' };
         }
-        console.log('Img ' + (index + 1) + ' usando sketch Canvas');
-        return generarPlaceholder(enhanced, index);
+        console.warn('Img ' + (index + 1) + ' usando sketch Canvas (placeholder)');
+        return { data: generarPlaceholder(enhanced, index), source: 'Canvas (placeholder)' };
     });
 
     function tryRequestWithRetry(payload, maxRetries, idx) {
@@ -1279,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 var showConfigBtn = document.getElementById('showConfigBtn');
                 if (showConfigBtn) showConfigBtn.textContent = 'Ocultar configuracion';
             }
-            alert(getErrorMessage('CONFIG_REQUIRED'));
+            alert(getErrorMessage('CONFIG_REQUIRED', '', 'API de Texto'));
             return;
         }
 
@@ -1291,6 +1309,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             statusText.innerText = 'Generando imagenes con IA...';
             var promesas = [];
+            var sourcesUsadas = {};
             for (var e = 0; e < datosGuion.escenas.length; e++) {
                 var escena = datosGuion.escenas[e];
                 var planosImg = [];
@@ -1302,8 +1321,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 var imgIdx = e * 10 + p;
                                 statusText.innerText = 'Generando imagen ' + (imgIdx + 1) + '/8...';
                                 return fetchImageAsBase64(escena.planos[p].image_prompt, imgIdx);
-                            }).then(function(imgData) {
-                                planosImg.push(imgData);
+                            }).then(function(result) {
+                                planosImg.push(result.data);
+                                var src = result.source || 'Desconocido';
+                                sourcesUsadas[src] = (sourcesUsadas[src] || 0) + 1;
+                                statusText.innerText = 'Imagen ' + (e * 2 + p + 1) + '/8: ' + src;
                             });
                         })(p);
                     }
@@ -1313,15 +1335,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
             return Promise.all(promesas).then(function(imagenes) {
                 statusText.innerText = 'Empaquetando PDF final...';
+                var resumen = [];
+                var keys = Object.keys(sourcesUsadas);
+                for (var k = 0; k < keys.length; k++) {
+                    resumen.push(sourcesUsadas[keys[k]] + 'x ' + keys[k]);
+                }
+                console.log('Resumen de imagenes: ' + resumen.join(', '));
                 return ensamblarPDF(datosGuion, imagenes);
             }).then(function() {
-                statusText.innerText = 'Descarga completada.';
+                var resumen = [];
+                var keys = Object.keys(sourcesUsadas);
+                for (var k = 0; k < keys.length; k++) {
+                    resumen.push(sourcesUsadas[keys[k]] + 'x ' + keys[k]);
+                }
+                statusText.innerText = 'Completado. Imagenes: ' + (resumen.join(', ') || 'N/A');
             });
 
         }).catch(function(error) {
             console.error('Error en el flujo principal:', error);
-            var msg = getErrorMessage(error.message) || error.message || 'Ocurrio un error procesando el storyboard.';
+            var code = error.errorCode || error.message;
+            var provider = error.providerName || '';
+            var type = error.apiType || '';
+            var msg = getErrorMessage(code, provider, type);
             alert(msg);
+            statusText.innerText = 'Error: ' + msg;
         }).then(function() {
             setTimeout(function() {
                 loader.classList.add('hidden');
