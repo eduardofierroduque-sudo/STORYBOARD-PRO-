@@ -1,13 +1,20 @@
-# StoryboardPro AI
+# StoryboardPro AI — by FAP / fierroduque.com
 
 Aplicacion web que convierte un brief creativo en un storyboard visual de 4 escenas
-(2 planos por escena) con presentacion descargable en PDF. Arquitectura multi-proveedor:
-el usuario conecta su propia API key del servicio que prefiera, sin depender de un
-unico modelo.
+(2 planos por escena) con presentacion descargable en PDF.
+
+Parte del ecosistema **Free Animation Power (FAP)** junto con:
+
+- [FAP Desktop](https://github.com/freeanimationpower/FAP_PC_WEB_VERSION) — Estudio de animacion 2D para PC (1920x1080, 60 pinceles, tabletas)
+- [FAP Mobile](https://github.com/freeanimationpower/FAP_MOBILE_WEB_VERSION) — Estudio de animacion 2D para moviles
+
+Arquitectura multi-proveedor: el usuario conecta su propia API key del servicio que
+prefiera, sin depender de un unico modelo.
 
 ## Arquitectura
 
 - **Frontend**: HTML5 + Tailwind CSS (CDN) + JavaScript Vanilla (ES5)
+- **Tema visual**: Tema oscuro FAP — fondo `#0d0d10`, acento naranja `#ff6d00`
 - **IA Narrativa**: Multi-proveedor — API OpenAI-compatible generica + Gemini nativo
 - **Generacion Visual**: Multi-proveedor con fallback en cascada (HF FLUX, DALL-E,
   Gemini Imagen, Pollinations gratis, Canvas placeholder)
@@ -321,4 +328,9 @@ Puerto configurable via variable de entorno `PORT` (defecto: 3000).
 
 ## Licencia
 
-Proyecto de generacion de storyboards con IA — fierroduque.com
+© Todos los derechos reservados. Free Animation Power (FAP) por Eduardo Fierro Duque.
+
+- fierroduque.com
+- freeanimationpower.com
+- GitHub: [eduardofierroduque-sudo](https://github.com/eduardofierroduque-sudo)
+- GitHub FAP: [freeanimationpower](https://github.com/freeanimationpower)
