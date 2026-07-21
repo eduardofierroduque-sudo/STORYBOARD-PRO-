@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Storyboard — fierroduque.com</title>
+    <title>StoryboardPro — FAP / fierroduque.com</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
@@ -15,264 +15,302 @@
                 extend: {
                     fontFamily: {
                         mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+                        sans: ['Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
                     },
                 },
             },
         };
     </script>
     <style>
+        :root {
+            --bg-body: #0d0d10;
+            --bg-primary: #15171c;
+            --bg-secondary: #1a1d24;
+            --bg-tertiary: #252830;
+            --text-primary: #e8ecf0;
+            --text-secondary: #a0a8b0;
+            --accent: #ff6d00;
+            --accent-light: #ffab40;
+            --border: #3a3d44;
+            --green: #4caf50;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: #e8e9eb;
-            background-image:
-                radial-gradient(ellipse at 30% 20%, rgba(0, 0, 0, 0.02) 0%, transparent 60%),
-                radial-gradient(ellipse at 70% 80%, rgba(0, 0, 0, 0.03) 0%, transparent 60%);
+            background: var(--bg-body);
             min-height: 100vh;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--text-primary);
         }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-light); }
+
         .card-board {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow:
-                0 1px 3px rgba(0, 0, 0, 0.06),
-                0 6px 24px rgba(0, 0, 0, 0.07);
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
             overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
+
         .clapper-stripe {
-            height: 28px;
-            background: repeating-linear-gradient(
-                -55deg,
-                #1a1a1a,
-                #1a1a1a 10px,
-                #ffffff 10px,
-                #ffffff 20px
-            );
-            border-bottom: 2px solid #e0e0e0;
+            height: 6px;
+            background: var(--accent);
         }
+
         .title-film {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 22px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 20px;
             font-weight: 700;
-            color: #111111;
-            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
             line-height: 1.2;
         }
+
         .desc-film {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 12px;
             font-weight: 400;
-            color: #555555;
+            color: var(--text-secondary);
             line-height: 1.7;
         }
+
         .label-film {
             display: block;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
             font-weight: 600;
-            color: #333333;
+            color: var(--text-secondary);
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
+
         .input-film {
             width: 100%;
-            background: #f5f5f5;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 14px 18px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 13px;
-            color: #1a1a1a;
+            background: var(--bg-tertiary);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-primary);
             resize: none;
             line-height: 1.65;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
+
         .input-film::placeholder {
-            color: #b0b0b0;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            color: #555860;
+            font-family: 'JetBrains Mono', monospace;
         }
+
         .input-film:focus {
             outline: none;
-            border-color: #555555;
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255,109,0,0.15);
         }
+
+        .input-film:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .btn-film {
             width: 100%;
-            background: #1a1a1a;
+            background: var(--accent);
             border: none;
-            border-radius: 10px;
-            padding: 15px 24px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 13px;
-            font-weight: 600;
-            color: #ffffff;
+            font-weight: 700;
+            color: #fff;
             cursor: pointer;
             letter-spacing: 0.3px;
             transition: all 0.2s ease;
         }
+
         .btn-film:hover {
-            background: #2d2d2d;
+            background: var(--accent-light);
             transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 16px rgba(255,109,0,0.25);
         }
+
         .btn-film:active {
             transform: translateY(0);
-            background: #000000;
+            background: #e05500;
         }
+
         .btn-film:disabled {
-            opacity: 0.3;
+            opacity: 0.35;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none !important;
         }
+
         .loader-film {
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 15px 20px;
-            background: #f5f5f5;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
+            padding: 14px 18px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
         }
+
         .loader-prog {
             width: 100px;
             height: 3px;
-            background: #e0e0e0;
+            background: var(--border);
             border-radius: 2px;
             overflow: hidden;
         }
+
         .loader-prog-fill {
             height: 100%;
-            background: #1a1a1a;
+            background: var(--accent);
             border-radius: 2px;
             animation: glide 2s ease-in-out infinite;
             width: 0%;
         }
+
         @keyframes glide {
             0% { width: 0%; margin-left: 0; }
             40% { width: 45%; margin-left: 0; }
             60% { width: 25%; margin-left: 75%; }
             100% { width: 0%; margin-left: 100%; }
         }
+
         .divider-film {
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #cccccc, #555555, #cccccc, transparent);
+            height: 1px;
+            background: var(--border);
             margin: 14px 0;
         }
+
         .footer-film {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
             font-size: 10px;
-            color: #b0b0b0;
-            letter-spacing: 2px;
+            color: #555860;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        /* ===== CONFIG PANEL STYLES ===== */
+        /* ===== CONFIG PANEL ===== */
         .config-toggle {
             width: 100%;
             background: transparent;
-            border: 1.5px dashed #c0c0c0;
-            border-radius: 10px;
+            border: 1.5px dashed var(--border);
+            border-radius: 8px;
             padding: 10px 18px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 11px;
-            font-weight: 500;
-            color: #777777;
+            font-weight: 600;
+            color: var(--text-secondary);
             cursor: pointer;
             letter-spacing: 0.5px;
             transition: all 0.2s ease;
             margin-bottom: 6px;
         }
+
         .config-toggle:hover {
-            border-color: #888888;
-            color: #444444;
-            background: #fafafa;
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: rgba(255,109,0,0.05);
         }
+
         .config-panel {
-            background: #fafafa;
-            border: 1.5px solid #e8e8e8;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 18px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 16px;
         }
+
         .config-section-title {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
             font-weight: 700;
-            color: #333333;
+            color: var(--accent-light);
             letter-spacing: 1px;
             text-transform: uppercase;
             padding-bottom: 8px;
-            margin-bottom: 14px;
-            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
         }
+
         .select-film {
             width: 100%;
-            background: #ffffff;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 12px 14px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: var(--bg-tertiary);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
-            color: #1a1a1a;
+            color: var(--text-primary);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease;
             appearance: none;
             -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23a0a8b0' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 14px center;
+            background-position: right 12px center;
         }
+
         .select-film:focus {
             outline: none;
-            border-color: #555555;
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255,109,0,0.15);
         }
+
         .btn-config {
-            padding: 9px 18px;
-            border-radius: 8px;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             letter-spacing: 0.3px;
         }
+
         .btn-config-save {
-            background: #1a1a1a;
-            color: #ffffff;
+            background: var(--accent);
+            color: #fff;
             border: none;
         }
+
         .btn-config-save:hover {
-            background: #2d2d2d;
+            background: var(--accent-light);
         }
+
         .btn-config-clear {
             background: transparent;
-            color: #999999;
-            border: 1.5px solid #e0e0e0;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
         }
+
         .btn-config-clear:hover {
-            border-color: #999999;
-            color: #666666;
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
         }
+
         .config-status {
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 10px;
             font-weight: 500;
             letter-spacing: 0.3px;
         }
-        .provider-badge {
-            display: inline-block;
-            font-size: 9px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: #f0f0f0;
-            color: #777;
-            letter-spacing: 0.5px;
+
+        .accent-text {
+            color: var(--accent-light);
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 sm:p-6 font-mono">
+<body class="flex items-center justify-center p-4 sm:p-6 font-sans">
 
     <main class="w-full max-w-lg mx-auto">
 
@@ -284,33 +322,15 @@
 
                 <header class="mb-5">
                     <div class="flex items-start gap-3 mb-3">
-                        <svg class="w-12 h-12 shrink-0" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="24" cy="24" r="23" fill="#1a1a1a"/>
-                            <path d="
-                                M 26 6
-                                C 32 6, 38 10, 39 18
-                                C 40 26, 38 34, 34 40
-                                C 32 43, 28 44, 26 44
-                                L 22 44
-                                L 20 39
-                                C 16 38, 12 34, 11 29
-                                C 11 27, 11 26, 11.5 25
-                                L 12 24
-                                C 11 23, 10 21, 10 19
-                                C 11 17, 12 16, 13 15
-                                C 14 14, 16 13, 17 12
-                                C 18 11, 20 9, 23 7
-                                Z
-                            " fill="#fafafa"/>
-                        </svg>
+                        <img src="/logo-fap.png" alt="FAP" class="w-10 h-10 shrink-0 rounded-lg">
                         <h1 class="title-film">
-                            Generador de storyboard
-                            <span style="display:block;font-size:12px;font-weight:400;color:#777;letter-spacing:1px;margin-top:2px;">by fierroduque.com</span>
+                            StoryboardPro
+                            <span style="display:block;font-size:11px;font-weight:400;color:var(--text-secondary);letter-spacing:0.5px;margin-top:2px;">by fierroduque.com / freeanimationpower.com</span>
                         </h1>
                     </div>
                     <div class="divider-film"></div>
                     <p class="desc-film">
-                        Conecta tu propia API key y genera storyboards profesionales. Compatible con OpenAI, DeepSeek, Groq, HuggingFace, DALL-E y mas.
+                        Conecta tu propia API key y genera storyboards profesionales con IA. Multi-proveedor: OpenAI, Gemini, DeepSeek, HuggingFace, DALL-E y mas.
                     </p>
                 </header>
 
@@ -326,53 +346,26 @@
 
                     <div class="space-y-3">
                         <div>
-                            <label for="textProvider" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                Proveedor
-                            </label>
+                            <label for="textProvider" class="label-film">Proveedor</label>
                             <select id="textProvider" class="select-film"></select>
                         </div>
 
                         <div>
-                            <label for="textApiKey" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                API Key
-                            </label>
-                            <input
-                                type="password"
-                                id="textApiKey"
-                                class="input-film"
-                                placeholder="sk-..."
-                                style="padding:12px 14px;font-size:12px;"
-                            />
+                            <label for="textApiKey" class="label-film">API Key</label>
+                            <input type="password" id="textApiKey" class="input-film" placeholder="sk-...">
                         </div>
 
                         <div>
-                            <label for="textModel" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                Modelo
-                            </label>
-                            <input
-                                type="text"
-                                id="textModel"
-                                class="input-film"
-                                placeholder="gpt-4o"
-                                style="padding:12px 14px;font-size:12px;"
-                            />
+                            <label for="textModel" class="label-film">Modelo</label>
+                            <input type="text" id="textModel" class="input-film" placeholder="gpt-4o">
                         </div>
 
                         <div>
-                            <label for="textUrl" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                URL Base
-                            </label>
-                            <input
-                                type="text"
-                                id="textUrl"
-                                class="input-film"
-                                placeholder="https://api.openai.com/v1/chat/completions"
-                                style="padding:12px 14px;font-size:12px;"
-                            />
+                            <label for="textUrl" class="label-film">URL Base</label>
+                            <input type="text" id="textUrl" class="input-film" placeholder="https://api.openai.com/v1/chat/completions">
                         </div>
                     </div>
 
-                    <!-- Separador -->
                     <div class="divider-film" style="margin:18px 0;"></div>
 
                     <!-- API de Imagenes -->
@@ -380,100 +373,47 @@
 
                     <div class="space-y-3">
                         <div>
-                            <label for="imageProvider" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                Proveedor
-                            </label>
+                            <label for="imageProvider" class="label-film">Proveedor</label>
                             <select id="imageProvider" class="select-film"></select>
                         </div>
 
                         <div>
-                            <label for="imageApiKey" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                API Key
-                            </label>
-                            <input
-                                type="password"
-                                id="imageApiKey"
-                                class="input-film"
-                                placeholder="Ingresa tu API key / token"
-                                style="padding:12px 14px;font-size:12px;"
-                            />
+                            <label for="imageApiKey" class="label-film">API Key</label>
+                            <input type="password" id="imageApiKey" class="input-film" placeholder="Ingresa tu API key / token">
                         </div>
 
                         <div>
-                            <label for="imageModel" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                Modelo
-                            </label>
-                            <input
-                                type="text"
-                                id="imageModel"
-                                class="input-film"
-                                placeholder="black-forest-labs/FLUX.1-schnell"
-                                style="padding:12px 14px;font-size:12px;"
-                            />
+                            <label for="imageModel" class="label-film">Modelo</label>
+                            <input type="text" id="imageModel" class="input-film" placeholder="black-forest-labs/FLUX.1-schnell">
                         </div>
 
                         <div>
-                            <label for="imageUrl" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                URL Base (solo Personalizado)
-                            </label>
-                            <input
-                                type="text"
-                                id="imageUrl"
-                                class="input-film"
-                                placeholder="https://tu-api-personalizada.com/generar"
-                                style="padding:12px 14px;font-size:12px;"
-                                disabled
-                            />
+                            <label for="imageUrl" class="label-film">URL Base (solo Personalizado)</label>
+                            <input type="text" id="imageUrl" class="input-film" placeholder="https://tu-api-personalizada.com/generar" disabled>
                         </div>
 
                         <div id="imageExtraHeadersWrap" style="display:none;">
-                            <label for="imageExtraHeaders" class="label-film" style="font-size:10px;margin-bottom:5px;">
-                                Headers extra (JSON, solo Personalizado)
-                            </label>
-                            <textarea
-                                id="imageExtraHeaders"
-                                class="input-film"
-                                rows="2"
-                                placeholder='{"Authorization":"Bearer xxx","X-Custom":"valor"}'
-                                style="padding:10px 14px;font-size:11px;"
-                            ></textarea>
+                            <label for="imageExtraHeaders" class="label-film">Headers extra (JSON, solo Personalizado)</label>
+                            <textarea id="imageExtraHeaders" class="input-film" rows="2" placeholder='{"Authorization":"Bearer xxx","X-Custom":"valor"}' style="padding:10px 14px;font-size:11px;"></textarea>
                         </div>
                     </div>
 
-                    <!-- Botones de config -->
                     <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
-                        <button id="saveConfigBtn" class="btn-config btn-config-save" type="button">
-                            Guardar configuracion
-                        </button>
-                        <button id="clearConfigBtn" class="btn-config btn-config-clear" type="button">
-                            Limpiar
-                        </button>
+                        <button id="saveConfigBtn" class="btn-config btn-config-save" type="button">Guardar configuracion</button>
+                        <button id="clearConfigBtn" class="btn-config btn-config-clear" type="button">Limpiar</button>
                         <span id="configStatus" class="config-status" style="margin-left:auto;"></span>
                     </div>
 
                 </div>
-                <!-- ===== FIN PANEL CONFIG ===== -->
 
                 <!-- Formulario Brief -->
                 <div style="margin-top:2px;">
                     <div>
-                        <label for="briefInput" class="label-film">
-                            Brief creativo
-                        </label>
-                        <textarea
-                            id="briefInput"
-                            rows="5"
-                            placeholder="Ej: Un comercial de 30 segundos para una marca de autos electricos, dirigido a jovenes profesionales urbanos que valoran la sostenibilidad..."
-                            class="input-film"
-                        ></textarea>
+                        <label for="briefInput" class="label-film">Brief creativo</label>
+                        <textarea id="briefInput" rows="5" class="input-film" placeholder="Ej: Un comercial de 30 segundos para una marca de autos electricos, dirigido a jovenes profesionales urbanos que valoran la sostenibilidad..."></textarea>
                     </div>
 
-                    <button
-                        id="generateBtn"
-                        type="button"
-                        class="btn-film"
-                        style="margin-top:14px;"
-                    >
+                    <button id="generateBtn" type="button" class="btn-film" style="margin-top:14px;">
                         <span class="flex items-center justify-center gap-2.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 4V2m5 2V2m5 2V2M4 7h16M4 11h16M4 15h16M4 19h16"/>
@@ -488,7 +428,7 @@
                         <div class="loader-prog">
                             <div class="loader-prog-fill"></div>
                         </div>
-                        <span id="statusText" style="color:#555555;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;">
+                        <span id="statusText" style="color:var(--text-secondary);font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;">
                             Procesando...
                         </span>
                     </div>
